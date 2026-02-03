@@ -12,18 +12,20 @@ def cosine(signal_length, atom_count):
             dict[i, j]  = np.cos(np.pi * i * j / signal_length)
     return dict
 
-def morlet(N, sigma=1.0, kx=5.0, ky=0.0):
-    t = np.linspace(-2, 2, N)
-    x, y = np.meshgrid(t, t)
-    envelope = np.exp(-(x**2 + y**2) / (2 * sigma**2))
-    carrier = np.exp(1j * (kx * x + ky * y))
-    morlet = envelope * carrier
-    
-    return morlet
+def wavelet_matrix(signal_length, wavelet_name):
+    wavelet = pywt.Wavelet(wavelet_name)
+    wave_matrix = np.zeros((signal_length, signal_length))
+    level = pywt.dwt_max_level(signal_length, wavelet.dec_len)
+    # the trick to getting a wavelet matrix: run an identity operator over a full-scale DWT 
+    test_signals = np.eye(signal_length)
+    for i in range(signal_length):
+        mapping = pywt.wavedec(test_signals[i], wavelet, mode = 'per', level = level)
+        # mapping might be a tad longer 
+        wave_matrix[:, i] = np.concatenate(mapping)
+    return wave_matrix
 
-def mixed(signal_length):
+def mixed(signal_length, wavelet_name):
     d1 = cosine(signal_length, signal_length)
-    d2 = morlet(signal_length)
-    print(np.shape(d2))
-    return np.dstack((d1, d2))
+    d2 = wavelet_matrix(signal_length, wavelet_name)
+    return np.concatenate((d1, d2), axis=1)
 # DB4 wavelets

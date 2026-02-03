@@ -1,29 +1,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy, fista, omp
+import scipy, fista, omp, time
 import scipy.datasets
 import dictionary_builder as dic
 
-N = 1000
-time = np.linspace(0, 8, N)
+N = 256
 
-trend = np.array([5*x*x-2*x+4 for x in time])
-season = np.array([10*np.sin(2*np.pi*x) + 12*np.sin(4*np.pi*x + np.pi/3) for x in time])
-noise = np.random.normal(0, 5, N)
+time_axis = np.linspace(0, 4, N)
+trend = np.array([t*t for t in time_axis])
+season = np.array([np.sin(4*np.pi*t) for t in time_axis])
+noise = np.random.normal(0, 1, N)
 
 y = trend + season + noise
 
-
-learned_dict = dic.cosine(N, 2*N)
+learned_dict = dic.mixed(N, 'db4')
 dict_norms = np.linalg.norm(learned_dict, axis=0)
 
 learned_dict /= dict_norms
 
-print(np.shape(learned_dict))
-x = omp.fit(learned_dict.T, y)
-    
 
-recovered_signal = learned_dict @ x
-print(np.sum(np.abs(recovered_signal - y)))
-plt.plot(time, recovered_signal)
+result = omp.fit_fast(learned_dict.T, y)
+print(np.shape(result))
+plt.plot(time_axis, y)
+plt.plot(time_axis, result)
 plt.show()

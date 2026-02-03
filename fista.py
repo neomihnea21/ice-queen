@@ -23,7 +23,7 @@ def find_best_x(D, y, l, t = 1, steps = 25):
    # first guess
    x = np.zeros(solution_size)
    z = x # this will be modified 
-
+   
    # FISTA should converge fairly fast
    # but we won't run TOO MANY steps, or we recover what we started with
    old_tau = 1
