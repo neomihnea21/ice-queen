@@ -21,7 +21,7 @@ def wavelet_matrix(signal_length, wavelet_name):
     for i in range(signal_length):
         mapping = pywt.wavedec(test_signals[i], wavelet, mode = 'per', level = level)
         # mapping might be a tad longer 
-        wave_matrix[:, i] = np.concatenate(mapping)
+        wave_matrix[:, i] = np.concatenate(mapping)[:signal_length]
     return wave_matrix
 
 def mixed(signal_length, wavelet_name):
