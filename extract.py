@@ -1,22 +1,10 @@
 import numpy as np
 import soundfile as sf
 from scipy.io.wavfile import write
-import omp, time, copy, fista
+import omp, time, copy, fista, noises
 import dictionary_builder as dic 
 
-def pink_noise(duration, sr):
-    n = int(duration)
-    white = np.random.normal(0, 1, n) # start with white noise
-    fft = np.fft.rfft(white) 
 
-    freqs = np.fft.rfftfreq(n, 1 / sr) # and run a 1/f low-pass filter, this leads to 1/f spectral density
-    freqs[0] = freqs[1]
-    fft /= np.sqrt(freqs)
-
-    pink = np.fft.irfft(fft, n)
-    pink /= np.max(np.abs(pink))  # .wav works only with numbers from -1 to 1, so this is needed
-
-    return pink
 
 def find_snr(original, processed): 
    p1 = np.mean(original**2)
@@ -34,7 +22,7 @@ for path in paths:
     new_data_fista = np.zeros_like(data).astype(np.float32)
     song_size = np.shape(data)[1]
 
-    pink = pink_noise(song_size, sr)
+    pink = noises.pink_noise(song_size, sr)
     data[0] += pink
     data[1] += pink
     data = np.clip(data, -1, 1)
@@ -42,7 +30,7 @@ for path in paths:
     sf.write(f"assets/{path[7:-4]}-noised.wav", data.T, sr)
 
 
-    learned_dict = dic.mixed(N, 'db4')
+    learned_dict = dic.mixed(N, 'coif4')
     dict_norms = np.linalg.norm(learned_dict, axis=0)
     learned_dict /= dict_norms
 
@@ -52,7 +40,7 @@ for path in paths:
     for line in range(2):
         for j in range(0, song_size - N , N):
             section = data [line, j:j+N]
-            new_section  = omp.fit_fast(learned_dict.T, section, 30)
+            new_section, _  = omp.fit_fast(learned_dict.T, section, 30)
             new_data [line, j:j+N] = new_section
     t2=time.time()
     print(f"Eroarea cu OMP: {np.mean(new_data-orig_data.T)**2}, filtrarea piesei {path[7:-4]} a durat {t2-t1} secunde")

@@ -40,7 +40,7 @@ def fit(dict, y, iterations = 10):
 # which works, based on Cholesky factorization
 
 def fit_fast(D, y, iterations = 10): 
-   signal_length = np.shape(D)[1]
+   n_atoms, signal_length = np.shape(D)
    L = None
    residual = copy.deepcopy(y)
    right_side = [] 
@@ -75,4 +75,33 @@ def fit_fast(D, y, iterations = 10):
        z = np.linalg.solve(L, right_side)
        x = np.linalg.solve(L.T, z)
        residual = y - atoms.T @ x
-   return y - residual
+   x_rep = np.zeros(n_atoms)
+   x_rep[curr_atoms] = x
+   return y - residual, x_rep
+
+# this functions does OMP on a bunch of vectors at once
+# the reconstruction is more inaccurate than single-vector, but for training we don't have a choice
+# it's too slow otherwise  
+def fit_group(D, Y, Gram, h, iterations = 10):
+   n_atoms, signal_length = np.shape(D)
+
+   chosen_atoms = []
+   rhs = []
+   residual =copy.deepcopy(Y)
+
+   L = None 
+
+   for _ in range(iterations):
+      corrs = D @ residual.T 
+      scores = np.linalg.norm(corrs, axis=1)
+      scores[chosen_atoms] = -np.inf 
+
+      chosen_atom = np.argmax(scores) # we have to set the taken atoms to -infinity for this to work
+      rhs.append(h[chosen_atom])
+
+      B = np.stack(rhs, axis=0)
+      
+      if L is None:
+         L = np.array([[1.0]])
+      else:
+         gram_cur = Gram[np.ix_()]
