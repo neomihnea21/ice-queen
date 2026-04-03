@@ -13,7 +13,7 @@ Otherwise, you need to install all dependencies, listed in pyproject.toml, using
 
 Once the environment is set up, you can repair a corrupted file like this:   
 ```console
-  uv run app.py /path_to_source_file/sounds.wav /path_to_repaired_file/sounds_fixed.py
+  uv run app.py /path_to_source_file/sounds.wav /path_to_repaired_file/sounds_fixed.wav
 ```
 
 # Samples
